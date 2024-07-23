@@ -107,7 +107,7 @@ const getRectPos = () => {
   // 路径长度为0处的坐标
   const p = rect2.getPointAtLength(0)
   // 因为getPointAtLength方法获取到的坐标是相对于路径内的，所以要加上路径本身在画布上的坐标
-  const rect2Pos = {
+  const pathStartPos = {
     x: p.x + rect2.x(),
     y: p.y + rect2.y()
   }
@@ -139,8 +139,12 @@ const getRectPos = () => {
   })
   layer.add(test2)
   line2ControlPointStartDeg = radToDeg(
-    Math.atan2(rect2Pos.y - rect2CenterPoint.y, rect2Pos.x - rect2CenterPoint.x)
+    Math.atan2(
+      pathStartPos.y - rect2CenterPoint.y,
+      pathStartPos.x - rect2CenterPoint.x
+    )
   )
+  const rect2Pos = pathStartPos
   return {
     rect1Pos,
     rect2Pos
@@ -166,6 +170,9 @@ const createLine = () => {
     line2StartPoint.x,
     line2StartPoint.y
   )
+
+  line2StartPoint = getRect2NewLinkPoint(controlPoints[1].x, controlPoints[1].y)
+
   // 连接两个矩形的贝塞尔曲线
   const path = joinCubicBezierPath(
     line1StartPoint,
@@ -273,7 +280,7 @@ const bindEvent = () => {
     }
     if (deg < 0) {
       deg += 360
-    } 
+    }
     // 如果比例小于0，说明初始角度大于当前角度，那么加上一个周期，转为正数
     let ratio = (deg - line2ControlPointStartDeg) / 360
     if (ratio < 0) {
@@ -289,6 +296,26 @@ const bindEvent = () => {
     line2.points([point2.x(), point2.y(), line2StartPoint.x, line2StartPoint.y])
     updateCubicBezierPath()
   })
+}
+
+const getRect2NewLinkPoint = (x, y) => {
+  let deg = radToDeg(Math.atan2(y - rect2CenterPoint.y, x - rect2CenterPoint.x))
+  if (line2ControlPointStartDeg < 0) {
+    line2ControlPointStartDeg += 360
+  }
+  if (deg < 0) {
+    deg += 360
+  }
+  let ratio = (deg - line2ControlPointStartDeg) / 360
+  if (ratio < 0) {
+    ratio = 1 + ratio
+  }
+  const length = rect2.getLength()
+  const p = rect2.getPointAtLength(length * ratio)
+  return {
+    x: p.x + rect2.x(),
+    y: p.y + rect2.y()
+  }
 }
 
 // 更新贝塞尔曲线
